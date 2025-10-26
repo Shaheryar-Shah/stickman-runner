@@ -141,7 +141,7 @@ const ctx = canvas.getContext('2d');
 function resizeCanvasForDPR() {
   const containerWidth = canvas.clientWidth || Math.min(window.innerWidth - 40, 900);
   const logicalW = Math.max(320, containerWidth);
-  const logicalH = Math.round(logicalW * 240 / 900);
+  const logicalH = Math.round(logicalW * 360 / 900);
   const dpr = Math.min(window.devicePixelRatio || 1, 3);
   canvas.width = logicalW * dpr;
   canvas.height = logicalH * dpr;
