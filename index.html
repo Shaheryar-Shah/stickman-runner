@@ -186,7 +186,7 @@ let H = canvas.height / (window.devicePixelRatio || 1);
 function updateWH(){ W = canvas.width / (window.devicePixelRatio || 1); H = canvas.height / (window.devicePixelRatio || 1); }
 updateWH();
 
-let gravity = 1.5;
+let gravity = 0.85;
 let running = true;
 let score = 0;
 const scoreDisplay = document.getElementById('scoreDisplay');
@@ -202,7 +202,7 @@ const player = {
 
 let obstacles = [];
 let spawnTimer = 0;
-let baseSpeed = 30.0;
+let baseSpeed = 4.5;
 let speed = baseSpeed;
 
 /* Responsive init */
@@ -293,7 +293,7 @@ function update() {
   // update obstacles
   for (let i = obstacles.length - 1; i >= 0; i--) {
     const o = obstacles[i];
-    o.x -= speed;
+    o.x -= speed * dpr;
     if (o.x + o.w < 0) obstacles.splice(i,1);
     // collision detection with small padding
     const playerBox = { x: player.x + 2, y: player.y, w: player.w - 4, h: player.h };
