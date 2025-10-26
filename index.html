@@ -158,7 +158,7 @@ let H = canvas.height / (window.devicePixelRatio || 1);
 function updateWH(){ W = canvas.width / (window.devicePixelRatio || 1); H = canvas.height / (window.devicePixelRatio || 1); }
 updateWH();
 
-let gravity = 0.5;
+let gravity = 3.0;
 let running = true;
 let score = 0;
 const scoreDisplay = document.getElementById('scoreDisplay');
@@ -166,7 +166,7 @@ const scoreDisplay = document.getElementById('scoreDisplay');
 const player = { x:60, y:0, w:18, h:36, vy:0, onGround:true };
 let obstacles = [];
 let spawnTimer = 0;
-let baseSpeed = 8; // reasonable cross-device speed
+let baseSpeed = 10; // reasonable cross-device speed
 let speed = baseSpeed;
 
 /* Responsive init */
