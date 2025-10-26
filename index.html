@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-<title>Stickman vs Burning Trash — Offline Runner</title>
+<title>Stickman vs Burning Trash</title>
 <style>
   :root{
     --bg:#1d1d1d;
@@ -129,7 +129,7 @@
     <!-- Canvas -->
     <canvas id="gameCanvas" width="900" height="240" role="img" aria-label="Runner game canvas"></canvas>
 
-    <div class="note">Tap anywhere to jump. First visit must be online to enable offline play.</div>
+    <div class="note">Tap inside the box to jump.</div>
   </div>
 </div>
 
@@ -186,7 +186,7 @@ let H = canvas.height / (window.devicePixelRatio || 1);
 function updateWH(){ W = canvas.width / (window.devicePixelRatio || 1); H = canvas.height / (window.devicePixelRatio || 1); }
 updateWH();
 
-let gravity = 0.85;
+let gravity = 1.5;
 let running = true;
 let score = 0;
 const scoreDisplay = document.getElementById('scoreDisplay');
@@ -202,7 +202,7 @@ const player = {
 
 let obstacles = [];
 let spawnTimer = 0;
-let baseSpeed = 4.0;
+let baseSpeed = 6.0;
 let speed = baseSpeed;
 
 /* Responsive init */
