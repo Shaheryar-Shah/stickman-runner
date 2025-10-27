@@ -69,7 +69,6 @@
   }
   .overlay.show{ display:flex; }
 
-  /* Rectangular Dialog, dark colors */
   .dialog{
     width:min(92%,520px);
     background:#2d2d2d; 
@@ -122,8 +121,8 @@
       <div style="display:flex;gap:10px;align-items:center">
         <div id="scoreDisplay">Score: 0</div>
         <div class="controls">
-          <button id="restartBtn" class="btn" aria-label="Restart">Restart</button>
-          <button id="installBtn" class="btn" style="display:none">Install</button>
+          <button id="restartBtn" class="btn" aria-label="Restart" type="button">Restart</button>
+          <button id="installBtn" class="btn" style="display:none" type="button">Install</button>
         </div>
       </div>
     </div>
@@ -141,7 +140,7 @@
       <li>• Placeholder precaution #2 — edit me.</li>
     </ul>
     <div class="actions">
-      <button id="dialogRestart" class="restart">Restart</button>
+      <button id="dialogRestart" class="restart" type="button">Restart</button>
     </div>
   </div>
 </div>
@@ -167,7 +166,6 @@ function resizeCanvasForDPR() {
   canvas.style.height = logicalH + 'px';
   ctx.setTransform(dpr,0,0,dpr,0,0);
 }
-// Removed initial resizeCanvasForDPR() here to put it in resetGame for better sync.
 
 /* Game state */
 let W = canvas.width / (window.devicePixelRatio || 1);
@@ -206,9 +204,14 @@ window.addEventListener('touchstart', e=>{ e.preventDefault(); jump(); }, {passi
 /* Restart and overlay */
 const restartBtn = document.getElementById('restartBtn');
 restartBtn.addEventListener('click', resetGame);
+// FIX: Add touchstart handler for immediate mobile response
+restartBtn.addEventListener('touchstart', resetGame, {passive: true}); 
+
 const overlay = document.getElementById('overlay');
 const dialogRestart = document.getElementById('dialogRestart');
 dialogRestart.addEventListener('click', ()=>{ hideOverlay(); resetGame(); });
+// FIX: Add touchstart handler for dialog button
+dialogRestart.addEventListener('touchstart', ()=>{ hideOverlay(); resetGame(); }, {passive: true}); 
 
 function spawnObstacle() {
   const width = 20 + Math.round(Math.random()*32);
@@ -246,7 +249,6 @@ function update(dt) {
 
   score += 1*dt;
   if(Math.floor(score)%300===0) speed += 0.25;
-  // Fix: Ensure score is updated every frame
   scoreDisplay.textContent = 'Score: '+Math.floor(score/10);
 
   /* Update fog position for scrolling effect */
@@ -293,13 +295,11 @@ function drawStickman(){
 function drawFog(offsetX, alpha, speedFactor, fogColor) {
   ctx.globalAlpha = alpha;
   
-  // Create large, blurry fog shapes using arcs
   for (let i = 0; i < 4; i++) {
     const x = (offsetX + i * W/3) % (W * 1.5);
     const y = H - 20 - i * 15;
     const radius = W * 0.4 + i * 20;
 
-    // Use a radial gradient for a soft, smoky look
     const radialGradient = ctx.createRadialGradient(x, y, radius * 0.1, x, y, radius);
     radialGradient.addColorStop(0, fogColor);
     radialGradient.addColorStop(1, 'rgba(100, 100, 100, 0)');
@@ -309,7 +309,7 @@ function drawFog(offsetX, alpha, speedFactor, fogColor) {
     ctx.arc(x, y, radius, 0, Math.PI * 2);
     ctx.fill();
   }
-  ctx.globalAlpha = 1; // Reset global alpha
+  ctx.globalAlpha = 1; 
 }
 
 
@@ -318,8 +318,8 @@ function draw(){
 
   /* Draw super air polluted background */
   const skyGradient = ctx.createLinearGradient(0, 0, 0, H - 10);
-  skyGradient.addColorStop(0, '#7a8899'); // Darker smog color at the top
-  skyGradient.addColorStop(0.7, '#b0b8c0'); // Lighter smog color at the bottom
+  skyGradient.addColorStop(0, '#7a8899'); 
+  skyGradient.addColorStop(0.7, '#b0b8c0'); 
   ctx.fillStyle = skyGradient;
   ctx.fillRect(0, 0, W, H); 
   
@@ -356,7 +356,6 @@ function loop(currentTime){
 
 /* Reset game */
 function resetGame(){
-  // Ensure sizing and DPI is handled first
   resizeCanvasForDPR();
   initSizes();
   
@@ -370,17 +369,16 @@ function resetGame(){
   hideOverlay();
   lastTime=performance.now();
   
-  // Explicitly reset fog offsets and update initial score
   fogOffsetX1 = 0; 
   fogOffsetX2 = W / 2;
-  scoreDisplay.textContent = 'Score: 0'; // Set initial display score
+  scoreDisplay.textContent = 'Score: 0'; 
 
   if(rafId) cancelAnimationFrame(rafId);
   rafId=requestAnimationFrame(loop);
 }
 resetGame();
 
-window.addEventListener('resize', resizeCanvasForDPR); // Add event listener back here
+window.addEventListener('resize', resizeCanvasForDPR);
 const resizeObserver = new ResizeObserver(()=>{
   resizeCanvasForDPR();
   initSizes();
