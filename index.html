@@ -41,7 +41,7 @@
   #gameCanvas{
     width:100%;
     height:auto;
-    background:linear-gradient(#fff,#f7f7f7);
+    background:#b0b8c0;
     border-radius:10px;
     box-shadow:0 6px 20px rgba(16,24,40,0.08);
     touch-action:none;
@@ -68,26 +68,45 @@
     -webkit-backdrop-filter: blur(4px);
   }
   .overlay.show{ display:flex; }
+
+  /* Rectangular Dialog, dark colors */
   .dialog{
     width:min(92%,520px);
-    background:var(--card);
+    background:#2d2d2d; 
     border-radius:12px;
     padding:18px;
     box-shadow:0 10px 30px rgba(2,6,23,0.2);
-    color:#111827;
+    color:#f0f0f0; 
   }
-  .dialog h3{ margin:0 0 8px 0; font-size:18px; }
-  .dialog p{ margin:0 0 12px 0; color:var(--muted); font-size:14px; }
+  .dialog h3{ 
+    margin:0 0 8px 0; 
+    font-size:18px; 
+    color:#ffffff;
+    text-align:left;
+  }
+  .dialog p{ 
+    margin:0 0 12px 0; 
+    color:#ccc;
+    font-size:14px;
+    text-align:left;
+  }
   .precautions{
     margin:8px 0 14px 0;
     padding-left:18px;
-    color:var(--muted);
+    color:#ccc;
     font-size:14px;
   }
-  .dialog .actions{ display:flex; justify-content:center; gap:10px; }
+  .dialog .actions{ display:flex; justify-content:center; gap:10px; margin-top: 0; }
   .dialog .restart{
-    background:#111827;color:white;padding:8px 14px;border-radius:8px;border:none;cursor:pointer;font-weight:600;
+    background:#f0f0f0;
+    color:#111827;
+    padding:8px 14px;
+    border-radius:8px;
+    border:none;
+    cursor:pointer;
+    font-weight:600;
   }
+
   .note{ font-size:13px;color:var(--muted); text-align:center; margin-top:6px; }
   @media (max-width:420px){
     .dialog{ padding:14px; }
@@ -109,7 +128,7 @@
       </div>
     </div>
     <canvas id="gameCanvas" width="900" height="240" role="img" aria-label="Runner game canvas"></canvas>
-    <div class="note">Tap inside the box to jump.</div>
+    <div class="note">Tap anywhere to jump.</div> 
   </div>
 </div>
 
@@ -120,7 +139,6 @@
     <ul class="precautions">
       <li>• Placeholder precaution #1 — edit me.</li>
       <li>• Placeholder precaution #2 — edit me.</li>
-      <li>• Placeholder precaution #3 — edit me.</li>
     </ul>
     <div class="actions">
       <button id="dialogRestart" class="restart">Restart</button>
@@ -149,14 +167,12 @@ function resizeCanvasForDPR() {
   canvas.style.height = logicalH + 'px';
   ctx.setTransform(dpr,0,0,dpr,0,0);
 }
-window.addEventListener('resize', resizeCanvasForDPR);
-resizeCanvasForDPR();
+// Removed initial resizeCanvasForDPR() here to put it in resetGame for better sync.
 
 /* Game state */
 let W = canvas.width / (window.devicePixelRatio || 1);
 let H = canvas.height / (window.devicePixelRatio || 1);
 function updateWH(){ W = canvas.width / (window.devicePixelRatio || 1); H = canvas.height / (window.devicePixelRatio || 1); }
-updateWH();
 
 let gravity = 2.0;
 let running = true;
@@ -166,8 +182,12 @@ const scoreDisplay = document.getElementById('scoreDisplay');
 const player = { x:60, y:0, w:18, h:36, vy:0, onGround:true };
 let obstacles = [];
 let spawnTimer = 0;
-let baseSpeed = 10; // reasonable cross-device speed
+let baseSpeed = 10; 
 let speed = baseSpeed;
+
+let fogOffsetX1 = 0; 
+let fogOffsetX2 = W / 2;
+
 
 /* Responsive init */
 function initSizes(){
@@ -175,13 +195,13 @@ function initSizes(){
   player.y = H - 10 - player.h;
   player.x = Math.max(48, Math.round(W * 0.07));
 }
-initSizes();
+
 
 /* Input */
 function jump(){ if (!running) return; if (player.onGround){ player.vy=-16; player.onGround=false; }}
 window.addEventListener('keydown', e => { if(e.code==='Space'||e.code==='ArrowUp'||e.key===' '){ e.preventDefault(); jump(); }});
-canvas.addEventListener('mousedown', e=>{ e.preventDefault(); jump(); });
-canvas.addEventListener('touchstart', e=>{ e.preventDefault(); jump(); }, {passive:false});
+window.addEventListener('mousedown', e=>{ e.preventDefault(); jump(); });
+window.addEventListener('touchstart', e=>{ e.preventDefault(); jump(); }, {passive:false});
 
 /* Restart and overlay */
 const restartBtn = document.getElementById('restartBtn');
@@ -226,7 +246,14 @@ function update(dt) {
 
   score += 1*dt;
   if(Math.floor(score)%300===0) speed += 0.25;
+  // Fix: Ensure score is updated every frame
   scoreDisplay.textContent = 'Score: '+Math.floor(score/10);
+
+  /* Update fog position for scrolling effect */
+  fogOffsetX1 = (fogOffsetX1 - speed * 0.2 * dt) % W;
+  fogOffsetX2 = (fogOffsetX2 - speed * 0.4 * dt) % W;
+  if (fogOffsetX1 < -W) fogOffsetX1 += W;
+  if (fogOffsetX2 < -W) fogOffsetX2 += W;
 }
 
 function drawTrash(o){
@@ -262,12 +289,58 @@ function drawStickman(){
   ctx.moveTo(px+w/2, legY); ctx.lineTo(px+w/2+10, legY+(player.onGround?10:4)); ctx.stroke();
 }
 
+
+function drawFog(offsetX, alpha, speedFactor, fogColor) {
+  ctx.globalAlpha = alpha;
+  
+  // Create large, blurry fog shapes using arcs
+  for (let i = 0; i < 4; i++) {
+    const x = (offsetX + i * W/3) % (W * 1.5);
+    const y = H - 20 - i * 15;
+    const radius = W * 0.4 + i * 20;
+
+    // Use a radial gradient for a soft, smoky look
+    const radialGradient = ctx.createRadialGradient(x, y, radius * 0.1, x, y, radius);
+    radialGradient.addColorStop(0, fogColor);
+    radialGradient.addColorStop(1, 'rgba(100, 100, 100, 0)');
+    ctx.fillStyle = radialGradient;
+
+    ctx.beginPath();
+    ctx.arc(x, y, radius, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1; // Reset global alpha
+}
+
+
 function draw(){
   ctx.clearRect(0,0,W,H);
-  ctx.fillStyle='#e6e6e6'; ctx.fillRect(0,H-10,W,10);
-  ctx.fillStyle='#f8f8f8';
+
+  /* Draw super air polluted background */
+  const skyGradient = ctx.createLinearGradient(0, 0, 0, H - 10);
+  skyGradient.addColorStop(0, '#7a8899'); // Darker smog color at the top
+  skyGradient.addColorStop(0.7, '#b0b8c0'); // Lighter smog color at the bottom
+  ctx.fillStyle = skyGradient;
+  ctx.fillRect(0, 0, W, H); 
+  
+  // Layer 1 of pollution (fast, dark)
+  drawFog(fogOffsetX2, 0.45, 0.4, 'rgba(60, 60, 60, 1)'); 
+
+  // Draw darker, "dirty" ground
+  ctx.fillStyle='#4a4a4a'; 
+  ctx.fillRect(0,H-10,W,10);
+  
+  // Draw darker ground details
+  ctx.fillStyle='#3b3b3b';
   for(let gx=0;gx<W;gx+=30){ ctx.fillRect(gx,H-10,14,2); }
+
+  // Draw obstacles
   obstacles.forEach(o=>{ if(o.type==='trash') drawTrash(o); else { ctx.fillStyle='#2b2b2b'; ctx.fillRect(o.x,o.y,o.w,o.h); }});
+  
+  // Layer 2 of pollution (slow, light - appears over the ground and under the player)
+  drawFog(fogOffsetX1, 0.3, 0.2, 'rgba(80, 80, 80, 1)');
+
+  // Draw player
   drawStickman();
 }
 
@@ -283,8 +356,10 @@ function loop(currentTime){
 
 /* Reset game */
 function resetGame(){
+  // Ensure sizing and DPI is handled first
   resizeCanvasForDPR();
   initSizes();
+  
   obstacles=[];
   score=0;
   speed=baseSpeed;
@@ -294,11 +369,18 @@ function resetGame(){
   running=true;
   hideOverlay();
   lastTime=performance.now();
+  
+  // Explicitly reset fog offsets and update initial score
+  fogOffsetX1 = 0; 
+  fogOffsetX2 = W / 2;
+  scoreDisplay.textContent = 'Score: 0'; // Set initial display score
+
   if(rafId) cancelAnimationFrame(rafId);
   rafId=requestAnimationFrame(loop);
 }
 resetGame();
 
+window.addEventListener('resize', resizeCanvasForDPR); // Add event listener back here
 const resizeObserver = new ResizeObserver(()=>{
   resizeCanvasForDPR();
   initSizes();
